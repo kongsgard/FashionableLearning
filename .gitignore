@@ -100,5 +100,6 @@ ENV/
 # mypy
 .mypy_cache/
 
-# data
+# Data and experiments
 data/
+experiments/
