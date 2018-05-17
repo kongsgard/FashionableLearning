@@ -1,4 +1,5 @@
 import tensorflow as tf
+import multiprocessing
 
 import _init_paths
 from data_loader.fashion_mnist_data import DataGenerator
@@ -24,7 +25,7 @@ def main():
     # Create the experiments dirs
     create_dirs([config.summary_dir, config.checkpoint_dir])
     # Create a tensorflow session
-    sess = tf.Session()
+    sess = tf.InteractiveSession()
     # Create an instance of the model specified
     model = Model(config)
     # Load model if it exists
@@ -38,6 +39,10 @@ def main():
 
     # Train the model
     trainer.train()
+    print("Training complete!")
+    sess.close()
 
 if __name__ == '__main__':
-    main()
+    p = multiprocessing.Process(target=main)
+    p.start()
+    p.join()
