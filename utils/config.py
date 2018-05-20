@@ -2,7 +2,6 @@ import json
 from bunch import Bunch
 from importlib import import_module
 import os
-import re
 
 
 def get_config_from_json(json_file):
@@ -21,7 +20,6 @@ def get_config_from_json(json_file):
 
     return config, config_dict
 
-
 def process_config(json_file):
     config, _ = get_config_from_json(json_file)
     config.summary_dir = os.path.join("../experiments", config.exp_name, "summary/")
@@ -30,6 +28,6 @@ def process_config(json_file):
 
 def import_class(config, object):
     module = import_module(object + "s." + config + "_" + object)
-    name = re.sub(r'[^a-zA-Z0-9]', '', config) # Remove non-alphanumeric characters, including '_'
-    class_name = name[:1].upper() + name[1:] + object.capitalize()
+    name = config.split('_')
+    class_name = ''.join([(n[:1].upper() + n[1:]) for n in name]) + object.capitalize()
     return getattr(module, class_name)
