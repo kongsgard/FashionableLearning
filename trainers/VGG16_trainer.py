@@ -18,7 +18,8 @@ class VGG16Trainer(BaseTrain):
         loss = np.mean(losses)
         acc = np.mean(accs)
 
-        print("ACC,", acc)
+        print("Acc: ", acc)
+        print("Loss: ", loss)
 
         cur_it = self.model.global_step_tensor.eval(self.sess)
         summaries_dict = {
