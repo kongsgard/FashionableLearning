@@ -3,9 +3,9 @@ from tqdm import tqdm
 import numpy as np
 
 
-class SoftmaxTrainer(BaseTrain):
+class LogisticRegressionTrainer(BaseTrain):
     def __init__(self, sess, model, data, config, logger):
-        super(SoftmaxTrainer, self).__init__(sess, model, data, config, logger)
+        super(LogisticRegressionTrainer, self).__init__(sess, model, data, config, logger)
 
     def train_epoch(self):
         loop = tqdm(range(self.config.num_iter_per_epoch))
@@ -18,8 +18,8 @@ class SoftmaxTrainer(BaseTrain):
         loss = np.mean(losses)
         acc = np.mean(accs)
 
-        print("Acc: ", acc)
-        print("Loss: ", loss)
+        print("Acc:", acc)
+        print("Loss:", loss)
 
         cur_it = self.model.global_step_tensor.eval(self.sess)
         summaries_dict = {
@@ -31,7 +31,7 @@ class SoftmaxTrainer(BaseTrain):
 
     def train_step(self):
         batch_x, batch_y = next(self.data.next_batch(self.config.batch_size))
-        feed_dict = {self.model.x: batch_x, self.model.y_: batch_y, self.model.is_training: True}
+        feed_dict = {self.model.x: batch_x, self.model.y: batch_y, self.model.is_training: True}
         _, loss, acc = self.sess.run([self.model.train_step, self.model.cross_entropy, self.model.accuracy],
                                      feed_dict=feed_dict)
         return loss, acc
