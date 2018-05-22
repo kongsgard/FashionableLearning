@@ -44,7 +44,7 @@ class VGG16Trainer(BaseTrain):
         _, loss, acc = self.sess.run([self.model.train_step, self.model.cross_entropy, self.model.accuracy],
                                      feed_dict=feed_dict)
         return loss, acc
-        
+
     def test_step(self):
         x_test, y_test = self.data.get_test_data()
         feed_dict = {self.model.x: x_test, self.model.y: y_test, self.model.is_training: False}
