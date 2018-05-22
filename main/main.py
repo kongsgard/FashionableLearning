@@ -7,8 +7,7 @@ from utils.config import process_config, import_class
 from utils.dirs import create_dirs
 from utils.logger import Logger
 from utils.utils import get_args
-
-
+from models.VGG16_model import VGG16Model
 def main():
     # Capture the config path from the run arguments
     # then process the json configuration file
