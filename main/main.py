@@ -8,6 +8,7 @@ from utils.dirs import create_dirs
 from utils.logger import Logger
 from utils.utils import get_args
 
+
 def main():
     # Capture the config path from the run arguments
     # then process the json configuration file
