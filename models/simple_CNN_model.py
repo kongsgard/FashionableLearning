@@ -16,8 +16,8 @@ class SimpleCNNModel(BaseModel):
         num_classes = 10
 
         # Build the graph
-        self.x = tf.placeholder(dtype=tf.float32, shape=[None, num_features], name='x')
-        self.y_ = tf.placeholder(dtype=tf.float32, shape=[None, num_classes], name='actual_label')
+        self.x = tf.placeholder(dtype=tf.float32, shape=[None, num_features], name="image")
+        self.y = tf.placeholder(dtype=tf.float32, shape=[None, num_classes], name="label")
 
         # First convolutional layer
         first_conv_weight = self.weight_variable([5, 5, 1, 32])
@@ -51,16 +51,16 @@ class SimpleCNNModel(BaseModel):
         readout_weight = self.weight_variable([1024, num_classes])
         readout_bias = self.bias_variable([num_classes])
 
-        output = tf.matmul(h_fc1_drop, readout_weight) + readout_bias
+        logits = tf.matmul(h_fc1_drop, readout_weight) + readout_bias
         with tf.name_scope('softmax'):
-            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=output, labels=self.y_))
+            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=self.y))
 
             self.train_step = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.cross_entropy,
                                                                                      global_step=self.global_step_tensor)
 
             with tf.name_scope('accuracy'):
-                output = tf.identity(tf.nn.softmax(output), name='prediction')
-                correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(self.y_, 1))
+                logits = tf.identity(tf.nn.softmax(logits), name='prediction')
+                correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(self.y, 1))
                 with tf.name_scope('accuracy'):
                     self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
