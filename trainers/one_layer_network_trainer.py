@@ -3,9 +3,9 @@ from tqdm import tqdm
 import numpy as np
 
 
-class SimpleCNNTrainer(BaseTrain):
+class OneLayerNetworkTrainer(BaseTrain):
     def __init__(self, sess, model, data, config,logger):
-        super(SimpleCNNTrainer, self).__init__(sess, model, data, config,logger)
+        super(OneLayerNetworkTrainer, self).__init__(sess, model, data, config,logger)
 
     def train_epoch(self):
         loop = tqdm(range(self.config.num_iter_per_epoch))
@@ -39,16 +39,14 @@ class SimpleCNNTrainer(BaseTrain):
 
     def train_step(self):
         batch_x, batch_y = next(self.data.next_batch(self.config.batch_size))
-        feed_dict = {self.model.x: batch_x, self.model.y_: batch_y, self.model.keep_prob: 0.5,
-                     self.model.is_training: True}
+        feed_dict = {self.model.x: batch_x, self.model.y: batch_y, self.model.is_training: True}
         _, loss, acc = self.sess.run([self.model.train_step, self.model.cross_entropy,
                                       self.model.accuracy], feed_dict=feed_dict)
         return loss, acc
 
     def test_step(self):
         x_test, y_test = self.data.get_test_data()
-        feed_dict = {self.model.x: x_test, self.model.y: y_test, self.model.keep_prob: 1.,
-                     self.model.is_training: False}
+        feed_dict = {self.model.x: x_test, self.model.y: y_test, self.model.is_training: False}
         loss, acc = self.sess.run([self.model.cross_entropy, self.model.accuracy],
                                    feed_dict=feed_dict)
         return loss, acc
