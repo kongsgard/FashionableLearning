@@ -2,9 +2,9 @@ from base.base_model import BaseModel
 import tensorflow as tf
 
 
-class ExampleModel(BaseModel):
+class OneLayerNetworkModel(BaseModel):
     def __init__(self, config):
-        super(ExampleModel, self).__init__(config)
+        super(OneLayerNetworkModel, self).__init__(config)
         self.build_model()
         self.init_saver()
 
