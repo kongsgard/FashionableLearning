@@ -9,21 +9,22 @@ class CapsnetModel(BaseModel):
         self.init_saver()
 
     def build_model(self):
+        self.is_training = tf.placeholder(tf.bool)
+
+        #Create the model
+        self.x = tf.placeholder(dtype=tf.float32, shape=[None, 784], name="image")
+        self.x_reshaped = tf.reshape(self.x, [-1, 28, 28, 1], name='Reshape_input')
+
+        # Convolutional layer
+        self.conv1 = tf.layers.conv2d(inputs=self.x_reshaped,filters = 256,kernel_size = [9,9], padding='valid',activation=tf.nn.relu)
 
 
 
 
 
-
-
-
-
-
-
-    x = layers.Input(shape=input_shape)
 
     # Layer 1: Just a conventional Conv2D layer
-    conv1 = layers.Conv2D(filters=256, kernel_size=9, strides=1, padding='valid', activation='relu', name='conv1')(x)
+#    conv1 = layers.Conv2D(filters=256, kernel_size=9, strides=1, padding='valid', activation='relu', name='conv1')(x)
 
     # Layer 2: Conv2D layer with `squash` activation, then reshape to [None, num_capsule, dim_capsule]
     primarycaps = PrimaryCap(conv1, dim_capsule=8, n_channels=32, kernel_size=9, strides=2, padding='valid')
