@@ -5,5 +5,12 @@
   "learning_rate": 0.001,
   "batch_size": 100,
   "state_size": [784],
-  "max_to_keep": 5
+  "max_to_keep": 5,
+  "m_plus": 0.9,
+  "m_minus": 0.1,
+  "lambda_val": 0.5,
+  "epsilon": 1e-9,
+  "regularization_scale": 0.392,
+  "stddev": 0.01,
+  "iter_routing": 3
 }
