@@ -3,9 +3,9 @@ from tqdm import tqdm
 import numpy as np
 
 
-class SimpleCNNTrainer(BaseTrain):
+class CNNTwoConvLayersTrainer(BaseTrain):
     def __init__(self, sess, model, data, config,logger):
-        super(SimpleCNNTrainer, self).__init__(sess, model, data, config,logger)
+        super(CNNTwoConvLayersTrainer, self).__init__(sess, model, data, config,logger)
 
     def train_epoch(self):
         loop = tqdm(range(self.config.num_iter_per_epoch))

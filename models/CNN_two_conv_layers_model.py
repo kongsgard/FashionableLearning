@@ -2,9 +2,9 @@ from base.base_model import BaseModel
 import tensorflow as tf
 
 
-class SimpleCNNModel(BaseModel):
+class CNNTwoConvLayersModel(BaseModel):
     def __init__(self, config):
-        super(SimpleCNNModel, self).__init__(config)
+        super(CNNTwoConvLayersModel, self).__init__(config)
         self.build_model()
         self.init_saver()
 
