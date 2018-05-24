@@ -1,6 +1,6 @@
 {
   "exp_name": "capsnet",
-  "num_epochs": 50,
+  "num_epochs": 10,
   "num_iter_per_epoch": 600,
   "num_iter_per_epoch_test": 100,
   "learning_rate": 0.001,
