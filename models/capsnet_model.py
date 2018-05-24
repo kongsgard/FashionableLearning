@@ -16,8 +16,10 @@ class CapsnetModel(BaseModel):
         #Create the model
         self.x = tf.placeholder(dtype=tf.float32, shape=[None, 784], name="image")
         self.x_reshaped = tf.reshape(self.x, [self.config.batch_size, 28, 28, 1], name='Reshape_input') #NOTE:Change batch_size to -1
-        self.y = tf.placeholder(dtype=tf.int32, shape=[None], name="label")
-        self.Y = tf.one_hot(self.y, depth=10, axis=1, dtype=tf.float32)
+
+        self.y = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="label")
+        self.y_max = tf.argmax(self.y, axis=1)
+
         # First convolutional layer
         self.conv1 = tf.layers.conv2d(inputs = self.x_reshaped,filters = 256,kernel_size = [9,9], padding='valid',activation=tf.nn.relu)
 
@@ -46,7 +48,7 @@ class CapsnetModel(BaseModel):
         self.argmax_idx = tf.to_int32(tf.argmax(self.softmax_v, axis=1))
         assert self.argmax_idx.get_shape() == [self.config.batch_size, 1, 1]
         self.argmax_idx  = tf.reshape(self.argmax_idx, shape=(self.config.batch_size, ))
-        self.masked_v = tf.multiply(tf.squeeze(self.caps2), tf.reshape(self.Y, (-1, 10, 1)))
+        self.masked_v = tf.multiply(tf.squeeze(self.caps2), tf.reshape(self.y, (-1, 10, 1)))
         self.v_length = tf.sqrt(tf.reduce_sum(tf.square(self.caps2), axis=2, keepdims=True) + self.config.epsilon)
 
         # 2. Reconstructe the MNIST images with 3 FC layers
@@ -57,18 +59,11 @@ class CapsnetModel(BaseModel):
         assert fc2.get_shape() == [self.config.batch_size, 1024]
         self.decoded = tf.contrib.layers.fully_connected(fc2, num_outputs=784, activation_fn=tf.sigmoid)
 
-
-
-        print("\n\n\n")
-        print(self.y.shape)
-        print(self.argmax_idx.shape)
-        print("\n\n\n")
-
         with tf.name_scope("loss"):
             self.loss()
             self.train_step = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.cross_entropy,
                                                                                      global_step=self.global_step_tensor)
-            correct_prediction = tf.equal(tf.to_int32(self.y), self.argmax_idx)
+            correct_prediction = tf.equal(tf.to_int32(self.y_max), self.argmax_idx)
             self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     def init_saver(self):
@@ -86,7 +81,7 @@ class CapsnetModel(BaseModel):
         max_l = tf.reshape(max_l, shape=(self.config.batch_size, -1))
         max_r = tf.reshape(max_r, shape=(self.config.batch_size, -1))
 
-        T_c = self.Y
+        T_c = self.y
         L_c = T_c * max_l + self.config.lambda_val * (1 - T_c) * max_r
         self.margin_loss = tf.reduce_mean(tf.reduce_sum(L_c, axis=1))
 
@@ -195,7 +190,6 @@ def routing(self, input, b_IJ):
                 b_IJ += u_produce_v
 
     return(v_J)
-
 
 def squash(self, vector):
     vec_squared_norm = tf.reduce_sum(tf.square(vector), axis = -2, keepdims=True)

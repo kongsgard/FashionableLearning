@@ -2,7 +2,7 @@ import numpy as np
 
 from tensorflow.examples.tutorials.mnist import input_data
 
-fashion_mnist = input_data.read_data_sets('data/fashion', source_url='http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/', one_hot=False)
+fashion_mnist = input_data.read_data_sets('data/fashion', source_url='http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/', one_hot=True)
 
 class DataGenerator:
     def __init__(self, config):
