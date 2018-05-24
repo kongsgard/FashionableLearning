@@ -10,31 +10,6 @@ class CapsnetModel(BaseModel):
         self.build_model()
         self.init_saver()
 
-
-    def loss(self):
-        # 1. The margin loss
-        # max_l = max(0, m_plus-||v_c||)^2
-        max_l = tf.square(tf.maximum(0., self.config.m_plus - self.v_length))
-        # max_r = max(0, ||v_c||-m_minus)^2
-        max_r = tf.square(tf.maximum(0., self.v_length - self.config.m_minus))
-        assert max_l.get_shape() == [self.config.batch_size, 10, 1, 1]
-
-        max_l = tf.reshape(max_l, shape=(self.config.batch_size, -1))
-        max_r = tf.reshape(max_r, shape=(self.config.batch_size, -1))
-
-        T_c = self.y
-        L_c = T_c * max_l + self.config.lambda_val * (1 - T_c) * max_r
-        self.margin_loss = tf.reduce_mean(tf.reduce_sum(L_c, axis=1))
-
-        # 2. The reconstruction loss
-        orgin = tf.reshape(self.x, shape=(self.config.batch_size, -1))
-        squared = tf.square(self.decoded - orgin)
-        self.reconstruction_err = tf.reduce_mean(squared)
-
-        # 3. Total loss
-        self.cross_entropy = self.margin_loss + self.config.regularization_scale * self.reconstruction_err
-
-
     def build_model(self):
         self.is_training = tf.placeholder(tf.bool)
 
@@ -51,6 +26,7 @@ class CapsnetModel(BaseModel):
                                 batch_size = self.config.batch_size, stddev = self.config.stddev,
                                 iter_routing = self.config.iter_routing, epsilon = self.config.epsilon)
         self.caps1 = primaryCaps(self.conv1, kernel_size=9, stride=2)
+        assert caps1.get_shape() == [self.config.batch_size, 1152, 8, 1]
 
         # Digit capsules layers
         digitCaps = CapsLayer(num_outputs=10, vec_len=16, with_routing=True, layer_type='FC',
@@ -60,7 +36,6 @@ class CapsnetModel(BaseModel):
         self.caps2 = digitCaps(self.caps1)
 
 
-        #self.config.batch_size
         # Decoder
         # a). calc ||v_c||, then do softmax(||v_c||)
         self.v_length = tf.sqrt(tf.reduce_sum(tf.square(self.caps2), axis=2, keepdims=True) + self.config.epsilon)
@@ -86,11 +61,35 @@ class CapsnetModel(BaseModel):
             self.loss()
             self.train_step = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.cross_entropy,
                                                                                      global_step=self.global_step_tensor)
-            correct_prediction = tf.equal(tf.to_int32(self.y), self.argmax_idx)
+            correct_prediction = tf.equal(tf.to_int32(self.y), self.logits)
             self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     def init_saver(self):
         self.saver = tf.train.Saver(max_to_keep=self.config.max_to_keep)
+
+
+    def loss(self):
+        # 1. The margin loss
+        # max_l = max(0, m_plus-||v_c||)^2
+        max_l = tf.square(tf.maximum(0., self.config.m_plus - self.v_length))
+        # max_r = max(0, ||v_c||-m_minus)^2
+        max_r = tf.square(tf.maximum(0., self.v_length - self.config.m_minus))
+        assert max_l.get_shape() == [self.config.batch_size, 10, 1, 1]
+
+        max_l = tf.reshape(max_l, shape=(self.config.batch_size, -1))
+        max_r = tf.reshape(max_r, shape=(self.config.batch_size, -1))
+
+        T_c = self.y
+        L_c = T_c * max_l + self.config.lambda_val * (1 - T_c) * max_r
+        self.margin_loss = tf.reduce_mean(tf.reduce_sum(L_c, axis=1))
+
+        # 2. The reconstruction loss
+        orgin = tf.reshape(self.x, shape=(self.config.batch_size, -1))
+        squared = tf.square(self.decoded - orgin)
+        self.reconstruction_err = tf.reduce_mean(squared)
+
+        # 3. Total loss
+        self.cross_entropy = self.margin_loss + self.config.regularization_scale * self.reconstruction_err
 
 
 #NOTE: batch size should be None, so training data will work?
