@@ -27,15 +27,22 @@ class CapsnetTrainer(BaseTrain):
             'acc': train_acc,
         }
 
-        '''
-        test_loss, test_acc = self.test_step()
+        losses = []
+        accs = []
+        for _ in loop:
+            loss, acc = self.test_step()
+            losses.append(loss)
+            accs.append(acc)
+        test_loss = np.mean(losses)
+        test_acc = np.mean(accs)
+
         test_summaries_dict = {
             'loss': test_loss,
             'acc': test_acc,
         }
-        '''
+
         self.logger.summarize(cur_it, summaries_dict=train_summaries_dict, summarizer='train')
-        #self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
+        self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
         self.model.save(self.sess)
 
     def train_step(self):
@@ -46,9 +53,8 @@ class CapsnetTrainer(BaseTrain):
         return loss, acc
 
     def test_step(self):
-        x_test, y_test = self.data.get_test_data()
-        feed_dict = {self.model.x: x_test, self.model.y: y_test, self.model.keep_prob: 1.,
-                     self.model.is_training: False}
+        x_test, y_test = next(self.data.next_batch_testdata(self.config.batch_size))
+        feed_dict = {self.model.x: x_test, self.model.y: y_test,self.model.is_training: False}
         loss, acc = self.sess.run([self.model.cross_entropy, self.model.accuracy],
                                    feed_dict=feed_dict)
         return loss, acc
