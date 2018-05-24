@@ -26,7 +26,7 @@ class CapsnetModel(BaseModel):
                                 batch_size = self.config.batch_size, stddev = self.config.stddev,
                                 iter_routing = self.config.iter_routing, epsilon = self.config.epsilon)
         self.caps1 = primaryCaps(self.conv1, kernel_size=9, stride=2)
-        assert caps1.get_shape() == [self.config.batch_size, 1152, 8, 1]
+        #assert caps1.get_shape() == [self.config.batch_size, 1152, 8, 1]
 
         # Digit capsules layers
         digitCaps = CapsLayer(num_outputs=10, vec_len=16, with_routing=True, layer_type='FC',
