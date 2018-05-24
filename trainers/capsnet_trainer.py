@@ -27,6 +27,7 @@ class CapsnetTrainer(BaseTrain):
             'acc': train_acc,
         }
 
+        loop = tqdm(range(self.config.num_iter_per_epoch_test))
         losses = []
         accs = []
         for _ in loop:
