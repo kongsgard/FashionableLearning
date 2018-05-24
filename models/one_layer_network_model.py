@@ -19,7 +19,7 @@ class OneLayerNetworkModel(BaseModel):
         d2 = tf.layers.dense(d1, 10, name="dense2")
 
         with tf.name_scope("loss"):
-            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.y, logits=d2))
+            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=d2))
             self.train_step = tf.train.AdamOptimizer(self.config.learning_rate).minimize(self.cross_entropy,
                                                                                          global_step=self.global_step_tensor)
             correct_prediction = tf.equal(tf.argmax(d2, 1), tf.argmax(self.y, 1))
