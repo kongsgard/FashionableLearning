@@ -89,6 +89,8 @@ class CapsnetModel(BaseModel):
             correct_prediction = tf.equal(tf.to_int32(self.y), self.argmax_idx)
             self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+    def init_saver(self):
+        self.saver = tf.train.Saver(max_to_keep=self.config.max_to_keep)
 
 
 #NOTE: batch size should be None, so training data will work?
