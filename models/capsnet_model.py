@@ -2,6 +2,8 @@ from base.base_model import BaseModel
 import tensorflow as tf
 import numpy as np
 
+#NOTE: https://github.com/naturomics/CapsNet-Tensorflow
+
 class CapsnetModel(BaseModel):
     def __init__(self, config):
         super(CapsnetModel, self).__init__(config)
@@ -11,36 +13,25 @@ class CapsnetModel(BaseModel):
 
     def loss(self):
         # 1. The margin loss
-
-        # [batch_size, 10, 1, 1]
         # max_l = max(0, m_plus-||v_c||)^2
         max_l = tf.square(tf.maximum(0., self.config.m_plus - self.v_length))
         # max_r = max(0, ||v_c||-m_minus)^2
         max_r = tf.square(tf.maximum(0., self.v_length - self.config.m_minus))
         assert max_l.get_shape() == [self.config.batch_size, 10, 1, 1]
 
-        # reshape: [batch_size, 10, 1, 1] => [batch_size, 10]
         max_l = tf.reshape(max_l, shape=(self.config.batch_size, -1))
         max_r = tf.reshape(max_r, shape=(self.config.batch_size, -1))
 
-        # calc T_c: [batch_size, 10]
-        # T_c = Y, is my understanding correct? Try it.
-        T_c = self.Y
-        # [batch_size, 10], element-wise multiply
+        T_c = self.y
         L_c = T_c * max_l + self.config.lambda_val * (1 - T_c) * max_r
-
         self.margin_loss = tf.reduce_mean(tf.reduce_sum(L_c, axis=1))
 
         # 2. The reconstruction loss
-        orgin = tf.reshape(self.X, shape=(self.config.batch_size, -1))
+        orgin = tf.reshape(self.x, shape=(self.config.batch_size, -1))
         squared = tf.square(self.decoded - orgin)
         self.reconstruction_err = tf.reduce_mean(squared)
 
         # 3. Total loss
-        # The paper uses sum of squared error as reconstruction error, but we
-        # have used reduce_mean in `# 2 The reconstruction loss` to calculate
-        # mean squared error. In order to keep in line with the paper,the
-        # regularization scale should be 0.0005*784=0.392
         self.cross_entropy = self.margin_loss + self.config.regularization_scale * self.reconstruction_err
 
 
@@ -49,7 +40,7 @@ class CapsnetModel(BaseModel):
 
         #Create the model
         self.x = tf.placeholder(dtype=tf.float32, shape=[None, 784], name="image")
-        self.x_reshaped = tf.reshape(self.x, [-1, 28, 28, 1], name='Reshape_input')
+        self.x_reshaped = tf.reshape(self.x, [self.config.batch_size, 28, 28, 1], name='Reshape_input') #NOTE:Change batch_size to -1
         self.y = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="label")
 
         # First convolutional layer
@@ -65,14 +56,15 @@ class CapsnetModel(BaseModel):
         digitCaps = CapsLayer(num_outputs=10, vec_len=16, with_routing=True, layer_type='FC',
                                 batch_size = self.config.batch_size, stddev = self.config.stddev,
                                 iter_routing = self.config.iter_routing, epsilon = self.config.epsilon)
+
         self.caps2 = digitCaps(self.caps1)
 
 
         #self.config.batch_size
         # Decoder
         # a). calc ||v_c||, then do softmax(||v_c||)
-        self.v_length = tf.sqrt(reduce_sum(tf.square(self.caps2), axis=2, keepdims=True) + self.config.epsilon)
-        self.softmax_v = softmax(self.v_length, axis=1)
+        self.v_length = tf.sqrt(tf.reduce_sum(tf.square(self.caps2), axis=2, keepdims=True) + self.config.epsilon)
+        self.softmax_v = tf.nn.softmax(self.v_length, axis=1)
         assert self.softmax_v.get_shape() == [self.config.batch_size, 10, 1, 1]
 
         # b). pick out the index of max softmax val of the 10 caps
@@ -80,7 +72,7 @@ class CapsnetModel(BaseModel):
         assert self.argmax_idx.get_shape() == [self.config.batch_size, 1, 1]
         self.logits = tf.reshape(self.argmax_idx, shape=(self.config.batch_size, ))
         self.masked_v = tf.multiply(tf.squeeze(self.caps2), tf.reshape(self.y, (-1, 10, 1)))
-        self.v_length = tf.sqrt(reduce_sum(tf.square(self.caps2), axis=2, keepdims=True) + self.config.epsilon)
+        self.v_length = tf.sqrt(tf.reduce_sum(tf.square(self.caps2), axis=2, keepdims=True) + self.config.epsilon)
 
         # 2. Reconstructe the MNIST images with 3 FC layers
         vector_j = tf.reshape(self.masked_v, shape=(self.config.batch_size, -1))
@@ -99,9 +91,7 @@ class CapsnetModel(BaseModel):
 
 
 
-
-
-
+#NOTE: batch size should be None, so training data will work?
 class CapsLayer(object):
     def __init__(self, num_outputs, vec_len, batch_size, stddev, iter_routing, epsilon, with_routing=True, layer_type='FC'):
         self.num_outputs = num_outputs
@@ -139,12 +129,12 @@ class CapsLayer(object):
 
                 with tf.variable_scope('routing'):
                     b_IJ = tf.constant(np.zeros([self.batch_size, input.shape[1].value, self.num_outputs, 1, 1], dtype=np.float32))
-                    capsules = routing(self.input, b_IJ)
+                    capsules = routing(self, self.input, b_IJ)
                     capsules = tf.squeeze(capsules, axis=1)
 
             return(capsules)
 
-def routing(input, b_IJ):
+def routing(self, input, b_IJ):
     W = tf.get_variable('Weight', shape=(1, 1152, 160, 8, 1), dtype=tf.float32,
                         initializer=tf.random_normal_initializer(stddev=self.stddev))
     biases = tf.get_variable('bias', shape=(1, 1, 10, 16, 1))
@@ -152,7 +142,7 @@ def routing(input, b_IJ):
     input = tf.tile(input, [1, 1, 160, 1, 1])
     assert input.get_shape() == [self.batch_size, 1152, 160, 8, 1]
 
-    u_hat = reduce_sum(W * input, axis=3, keepdims=True)
+    u_hat = tf.reduce_sum(W * input, axis=3, keepdims=True)
     u_hat = tf.reshape(u_hat, shape=[-1, 1152, 10, 16, 1])
     assert u_hat.get_shape() == [self.batch_size, 1152, 10, 16, 1]
 
@@ -164,7 +154,7 @@ def routing(input, b_IJ):
         with tf.variable_scope('iter_' + str(r_iter)):
             # line 4:
             # => [batch_size, 1152, 10, 1, 1]
-            c_IJ = softmax(b_IJ, axis=2)
+            c_IJ = tf.nn.softmax(b_IJ, axis=2)
 
             # At last iteration, use `u_hat` in order to receive gradients from the following graph
             if r_iter == self.iter_routing - 1:
@@ -173,24 +163,24 @@ def routing(input, b_IJ):
                 # => [batch_size, 1152, 10, 16, 1]
                 s_J = tf.multiply(c_IJ, u_hat)
                 # then sum in the second dim, resulting in [batch_size, 1, 10, 16, 1]
-                s_J = reduce_sum(s_J, axis=1, keepdims=True) + biases
+                s_J = tf.reduce_sum(s_J, axis=1, keepdims=True) + biases
                 assert s_J.get_shape() == [self.batch_size, 1, 10, 16, 1]
 
                 # line 6:
                 # squash using Eq.1,
-                v_J = squash(s_J)
+                v_J = squash(self,s_J)
                 assert v_J.get_shape() == [self.batch_size, 1, 10, 16, 1]
             elif r_iter < self.iter_routing - 1:  # Inner iterations, do not apply backpropagation
                 s_J = tf.multiply(c_IJ, u_hat_stopped)
-                s_J = reduce_sum(s_J, axis=1, keepdims=True) + biases
-                v_J = squash(s_J)
+                s_J = tf.reduce_sum(s_J, axis=1, keepdims=True) + biases
+                v_J = squash(self, s_J)
 
                 # line 7:
                 # reshape & tile v_j from [batch_size ,1, 10, 16, 1] to [batch_size, 1152, 10, 16, 1]
                 # then matmul in the last tow dim: [16, 1].T x [16, 1] => [1, 1], reduce mean in the
                 # batch_size dim, resulting in [1, 1152, 10, 1, 1]
                 v_J_tiled = tf.tile(v_J, [1, 1152, 1, 1, 1])
-                u_produce_v = reduce_sum(u_hat_stopped * v_J_tiled, axis=3, keepdims=True)
+                u_produce_v = tf.reduce_sum(u_hat_stopped * v_J_tiled, axis=3, keepdims=True)
                 assert u_produce_v.get_shape() == [self.batch_size, 1152, 10, 1, 1]
 
                 # b_IJ += tf.reduce_sum(u_produce_v, axis=0, keep_dims=True)
