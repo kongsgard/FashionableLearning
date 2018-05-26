@@ -2,9 +2,9 @@ from base.base_model import BaseModel
 import tensorflow as tf
 
 
-class DenseOneLayerModel(BaseModel):
+class DenseTwoLayerModel(BaseModel):
     def __init__(self, config):
-        super(DenseOneLayerModel, self).__init__(config)
+        super(DenseTwoLayerModel, self).__init__(config)
         self.build_model()
         self.init_saver()
 
@@ -16,7 +16,8 @@ class DenseOneLayerModel(BaseModel):
 
         # Network architecture
         d1 = tf.layers.dense(self.x, 512, activation=tf.nn.relu, name="dense1")
-        logits = tf.layers.dense(d1, 10, name="out")
+        d2 = tf.layers.dense(d1, 512, activation=tf.nn.relu, name="dense2")
+        logits = tf.layers.dense(d2, 10, name="out")
 
         with tf.name_scope("loss"):
             self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=logits))
