@@ -26,16 +26,16 @@ class VGG16Trainer(BaseTrain):
             'loss': train_loss,
             'acc': train_acc,
         }
-
+        '''
         test_loss, test_acc = self.test_step()
         test_summaries_dict = {
             'loss': test_loss,
             'acc': test_acc,
         }
-
+        '''
         self.logger.summarize(cur_it, summaries_dict=train_summaries_dict, summarizer='train')
-        self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
-        self.model.save(self.sess)
+        #self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
+        #self.model.save(self.sess)
 
 
     def train_step(self):

@@ -1,8 +1,8 @@
 {
   "exp_name": "VGG16",
   "num_epochs": 50,
-  "num_iter_per_epoch": 600,
-  "learning_rate": 0.01,
+  "num_iter_per_epoch": 200,
+  "learning_rate": 0.00001,
   "batch_size": 100,
   "state_size": [784],
   "max_to_keep":5
