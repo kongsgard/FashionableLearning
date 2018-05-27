@@ -26,15 +26,19 @@ class VGG16Trainer(BaseTrain):
             'loss': train_loss,
             'acc': train_acc,
         }
-        '''
-        test_loss, test_acc = self.test_step()
-        test_summaries_dict = {
-            'loss': test_loss,
-            'acc': test_acc,
-        }
-        '''
+
+        loop = tqdm(range(self.config.num_iter_per_epoch_test))
+        losses = []
+        accs = []
+        for _ in loop:
+            loss, acc = self.test_step()
+            losses.append(loss)
+            accs.append(acc)
+        test_loss = np.mean(losses)
+        test_acc = np.mean(accs)
+
         self.logger.summarize(cur_it, summaries_dict=train_summaries_dict, summarizer='train')
-        #self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
+        self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
         #self.model.save(self.sess)
 
 
