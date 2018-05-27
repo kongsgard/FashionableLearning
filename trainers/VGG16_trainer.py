@@ -18,14 +18,15 @@ class VGG16Trainer(BaseTrain):
         train_loss = np.mean(losses)
         train_acc = np.mean(accs)
 
-        print("Acc:", acc) # TODO: Remove
-        print("Loss:", loss) # TODO: Remove
+        print("Train acc:", acc) # TODO: Remove
+        print("Train loss:", loss) # TODO: Remove
 
         cur_it = self.model.global_step_tensor.eval(self.sess)
         train_summaries_dict = {
             'loss': train_loss,
             'acc': train_acc,
         }
+
 
         loop = tqdm(range(self.config.num_iter_per_epoch_test))
         losses = []
@@ -36,6 +37,9 @@ class VGG16Trainer(BaseTrain):
             accs.append(acc)
         test_loss = np.mean(losses)
         test_acc = np.mean(accs)
+
+        print("Test acc:", acc) # TODO: Remove
+        print("Test loss:", loss) # TODO: Remove
 
         test_summaries_dict = {
             'loss': test_loss,
