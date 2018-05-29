@@ -18,8 +18,8 @@ class VGG16Trainer(BaseTrain):
         train_loss = np.mean(losses)
         train_acc = np.mean(accs)
 
-        print("Acc:", acc) # TODO: Remove
-        print("Loss:", loss) # TODO: Remove
+        print("Train acc:", acc) # TODO: Remove
+        print("Train loss:", loss) # TODO: Remove
 
         cur_it = self.model.global_step_tensor.eval(self.sess)
         train_summaries_dict = {
@@ -27,7 +27,20 @@ class VGG16Trainer(BaseTrain):
             'acc': train_acc,
         }
 
-        test_loss, test_acc = self.test_step()
+
+        loop = tqdm(range(self.config.num_iter_per_epoch_test))
+        losses = []
+        accs = []
+        for _ in loop:
+            loss, acc = self.test_step()
+            losses.append(loss)
+            accs.append(acc)
+        test_loss = np.mean(losses)
+        test_acc = np.mean(accs)
+
+        print("Test acc:", acc) # TODO: Remove
+        print("Test loss:", loss) # TODO: Remove
+
         test_summaries_dict = {
             'loss': test_loss,
             'acc': test_acc,
@@ -35,7 +48,7 @@ class VGG16Trainer(BaseTrain):
 
         self.logger.summarize(cur_it, summaries_dict=train_summaries_dict, summarizer='train')
         self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
-        self.model.save(self.sess)
+        #self.model.save(self.sess)
 
 
     def train_step(self):
@@ -46,8 +59,8 @@ class VGG16Trainer(BaseTrain):
         return loss, acc
 
     def test_step(self):
-        x_test, y_test = self.data.get_test_data()
-        feed_dict = {self.model.x: x_test, self.model.y: y_test, self.model.is_training: False}
+        x_test, y_test = next(self.data.next_batch_testdata(self.config.batch_size))
+        feed_dict = {self.model.x: x_test, self.model.y: y_test,self.model.is_training: False}
         loss, acc = self.sess.run([self.model.cross_entropy, self.model.accuracy],
                                    feed_dict=feed_dict)
         return loss, acc
