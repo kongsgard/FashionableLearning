@@ -2,9 +2,9 @@ from base.base_model import BaseModel
 import tensorflow as tf
 
 
-class OneLayerNetworkModel(BaseModel):
+class DenseThreeLayerModel(BaseModel):
     def __init__(self, config):
-        super(OneLayerNetworkModel, self).__init__(config)
+        super(DenseThreeLayerModel, self).__init__(config)
         self.build_model()
         self.init_saver()
 
@@ -16,13 +16,15 @@ class OneLayerNetworkModel(BaseModel):
 
         # Network architecture
         d1 = tf.layers.dense(self.x, 512, activation=tf.nn.relu, name="dense1")
-        d2 = tf.layers.dense(d1, 10, name="dense2")
+        d2 = tf.layers.dense(d1, 512, activation=tf.nn.relu, name="dense2")
+        d3 = tf.layers.dense(d2, 512, activation=tf.nn.relu, name="dense3")
+        logits = tf.layers.dense(d3, 10, name="out")
 
         with tf.name_scope("loss"):
-            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=d2))
+            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=logits))
             self.train_step = tf.train.AdamOptimizer(self.config.learning_rate).minimize(self.cross_entropy,
                                                                                          global_step=self.global_step_tensor)
-            correct_prediction = tf.equal(tf.argmax(d2, 1), tf.argmax(self.y, 1))
+            correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(self.y, 1))
             self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 
