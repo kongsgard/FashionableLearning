@@ -17,9 +17,9 @@ class CNNOneConvLayerTrainer(BaseTrain):
             accs.append(acc)
         train_loss = np.mean(losses)
         train_acc = np.mean(accs)
-
-        print("Acc:", acc) # TODO: Remove
-        print("Loss:", loss) # TODO: Remove
+        print("Epoch#:", self.cur_epoch) # TODO: Remove
+        print("train_acc:", acc) # TODO: Remove
+        print("train_loss:", loss) # TODO: Remove
 
         cur_it = self.model.global_step_tensor.eval(self.sess)
         train_summaries_dict = {
@@ -27,14 +27,26 @@ class CNNOneConvLayerTrainer(BaseTrain):
             'acc': train_acc,
         }
 
-        test_loss, test_acc = self.test_step()
-        test_summaries_dict = {
-            'loss': test_loss,
-            'acc': test_acc,
+        valid_loss, valid_acc = self.valid_step()
+        valid_summaries_dict = {
+            'loss': valid_loss,
+            'acc': valid_acc,
         }
 
+        print("valid_acc:", valid_acc) # TODO: Remove
+        print("valid_loss:", valid_loss) # TODO: Remove
+
+        if self.cur_epoch == self.config.num_epochs:
+            test_loss, test_acc = self.test_step()
+            test_summaries_dict = {
+                'test_loss': test_loss,
+                'test_acc': test_acc,
+            }
+            self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
+
+
         self.logger.summarize(cur_it, summaries_dict=train_summaries_dict, summarizer='train')
-        self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
+        self.logger.summarize(cur_it, summaries_dict=valid_summaries_dict, summarizer='valid')
         self.model.save(self.sess)
 
     def train_step(self):
@@ -43,6 +55,14 @@ class CNNOneConvLayerTrainer(BaseTrain):
                      self.model.is_training: True}
         _, loss, acc = self.sess.run([self.model.train_step, self.model.cross_entropy,
                                       self.model.accuracy], feed_dict=feed_dict)
+        return loss, acc
+
+    def valid_step(self):
+        x_valid, y_valid = self.data.get_valid_data()
+        feed_dict = {self.model.x: x_valid, self.model.y: y_valid,self.model.keep_prob: 1.,
+                    self.model.is_training: False}
+        loss, acc = self.sess.run([self.model.cross_entropy, self.model.accuracy],
+                                   feed_dict=feed_dict)
         return loss, acc
 
     def test_step(self):

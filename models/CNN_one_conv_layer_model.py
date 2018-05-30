@@ -20,12 +20,13 @@ class CNNOneConvLayerModel(BaseModel):
         self.b1 = self.bias_variable([32])
 
         self.conv1 = self.conv2d(self.x_reshaped, self.w1) + self.b1
-        self.conv1_bn = self.batch_norm(self.conv1, 32, self.is_training)
-        self.act1 = tf.nn.relu(self.conv1_bn)
+        self.act1 = tf.nn.relu(self.conv1)
+        self.batch_norm = self.batch_norm(self.act1, 32, self.is_training)
+
         #self.conv1 = self.conv2d(self.x_reshaped, self.w1) + self.b1
         #self.act1 = tf.nn.relu(self.conv1)
 
-        self.pool1 = self.max_pool_2x2(self.act1)
+        self.pool1 = self.max_pool_2x2(self.batch_norm)
 
         # Flatten layer
         self.flatten = tf.reshape(self.pool1, [-1, 14 * 14 * 32])
