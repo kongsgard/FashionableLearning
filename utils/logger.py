@@ -49,6 +49,7 @@ class Logger:
 
             # Logging test accuracy and loss
             if summarizer is "test":
+                print("to be deleted")
                 summary_list2 = []
                 self.summary_placeholders2 = {}
                 self.summary_ops2 = {}
