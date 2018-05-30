@@ -3,9 +3,9 @@ from tqdm import tqdm
 import numpy as np
 
 
-class OneLayerNetworkTrainer(BaseTrain):
+class DenseThreeLayerTrainer(BaseTrain):
     def __init__(self, sess, model, data, config,logger):
-        super(OneLayerNetworkTrainer, self).__init__(sess, model, data, config,logger)
+        super(DenseThreeLayerTrainer, self).__init__(sess, model, data, config,logger)
 
     def train_epoch(self):
         loop = tqdm(range(self.config.num_iter_per_epoch))
