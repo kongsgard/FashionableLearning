@@ -22,16 +22,14 @@ class Logger:
         :param summaries_dict: the dict of the summaries values (tag,value)
         :return:
         """
-        #summary_writer = self.train_summary_writer if summarizer == "train" else self.valid_summary_writer
-        if summarizer == "train":
-            summary_writer = self.train_summary_writer
-        elif summarizer == "valid":
-            summary_writer = self.valid_summary_writer
-        else:
-            summary_writer = self.test_summary_writer
-
-
         with tf.variable_scope(scope):
+            if summarizer == "train":
+                summary_writer = self.train_summary_writer
+            elif summarizer == "valid":
+                summary_writer = self.valid_summary_writer
+            else:
+                summary_writer = self.test_summary_writer
+
             if summaries_dict is not None and summarizer is not "test":
                 summary_list = []
                 for tag, value in summaries_dict.items():
