@@ -18,8 +18,13 @@ class CNNOneConvLayerModel(BaseModel):
         # First convolutional layer
         self.w1 = self.weight_variable([5, 5, 1, 32])
         self.b1 = self.bias_variable([32])
+
         self.conv1 = self.conv2d(self.x_reshaped, self.w1) + self.b1
-        self.act1 = tf.nn.relu(self.conv1)
+        self.conv1_bn = self.batch_norm(self.conv1, 32, self.is_training)
+        self.act1 = tf.nn.relu(self.conv1_bn)
+        #self.conv1 = self.conv2d(self.x_reshaped, self.w1) + self.b1
+        #self.act1 = tf.nn.relu(self.conv1)
+
         self.pool1 = self.max_pool_2x2(self.act1)
 
         # Flatten layer
@@ -43,8 +48,11 @@ class CNNOneConvLayerModel(BaseModel):
         self.y = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="label")
 
         with tf.name_scope("loss"):
+            beta = 0 # Good starting value
+            regularizer = tf.nn.l2_loss(self.w1) + tf.nn.l2_loss(self.w3) + tf.nn.l2_loss(self.w4)
+
             self.cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits))
+                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits) + beta*regularizer)
             self.train_step = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.cross_entropy,
                                                                                      global_step=self.global_step_tensor)
             correct_prediction = tf.equal(tf.argmax(self.logits, 1), tf.argmax(self.y, 1))
@@ -70,3 +78,24 @@ class CNNOneConvLayerModel(BaseModel):
     @staticmethod
     def max_pool_2x2(features):
         return tf.nn.max_pool(features, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+    @staticmethod
+    def batch_norm(x, n_out, phase_train):
+        with tf.variable_scope('bn'):
+            beta = tf.Variable(tf.constant(0.0, shape=[n_out]),
+                                         name='beta', trainable=True)
+            gamma = tf.Variable(tf.constant(1.0, shape=[n_out]),
+                                          name='gamma', trainable=True)
+            batch_mean, batch_var = tf.nn.moments(x, [0,1,2], name='moments')
+            ema = tf.train.ExponentialMovingAverage(decay=0.5)
+
+            def mean_var_with_update():
+                ema_apply_op = ema.apply([batch_mean, batch_var])
+                with tf.control_dependencies([ema_apply_op]):
+                    return tf.identity(batch_mean), tf.identity(batch_var)
+
+            mean, var = tf.cond(phase_train,
+                                mean_var_with_update,
+                                lambda: (ema.average(batch_mean), ema.average(batch_var)))
+            normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
+        return normed
