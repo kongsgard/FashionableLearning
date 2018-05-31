@@ -8,6 +8,8 @@ from utils.dirs import create_dirs
 from utils.logger import Logger
 from utils.utils import get_args
 
+from models.logistic_regression_model import LogisticRegressionModel
+from trainers.logistic_regression_trainer import LogisticRegressionTrainer
 
 def main():
     # Capture the config path from the run arguments

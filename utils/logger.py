@@ -34,7 +34,10 @@ class Logger:
                 summary_list = []
                 for tag, value in summaries_dict.items():
                     if tag not in self.summary_ops:
-                        if len(value.shape) <= 1:
+                        if tag == 'histogram':
+                            self.summary_placeholders[tag] = tf.placeholder('float32', value.shape, name=tag)
+                            self.summary_ops[tag] = tf.summary.histogram(tag, self.summary_placeholders[tag])
+                        elif len(value.shape) <= 1:
                             self.summary_placeholders[tag] = tf.placeholder('float32', value.shape, name=tag)
                             self.summary_ops[tag] = tf.summary.scalar(tag, self.summary_placeholders[tag])
                         else:

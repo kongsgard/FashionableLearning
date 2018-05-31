@@ -1,13 +1,16 @@
 from base.base_model import BaseModel
 import tensorflow as tf
+import os
 
 
 class LogisticRegressionModel(BaseModel):
     def __init__(self, config):
         super(LogisticRegressionModel, self).__init__(config)
 
+        self.histogram_writer = tf.summary.FileWriter(os.path.join(self.config.summary_dir, "Histogram"))
         self.build_model()
         self.init_saver()
+
 
     def build_model(self):
         self.is_training = tf.placeholder(tf.bool)
@@ -17,11 +20,11 @@ class LogisticRegressionModel(BaseModel):
         self.y = tf.placeholder(tf.float32, [None, 10], name="label")
 
         # Weights and bias
-        w = tf.Variable(tf.random_normal(shape=[784, 10], stddev=0.01), name="weights")
-        b = tf.Variable(tf.zeros([10]), name='bias')
+        self.w = tf.Variable(tf.random_normal(shape=[784, 10], stddev=0.01), name="weights")
+        self.b = tf.Variable(tf.zeros([10]), name='bias')
 
         # Construct model
-        self.logits = tf.matmul(self.x, w) + b
+        self.logits = tf.matmul(self.x, self.w) + self.b
 
         with tf.name_scope("loss"):
             self.cross_entropy = tf.reduce_mean(
