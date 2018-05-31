@@ -44,11 +44,10 @@ class CNNOneConvLayerModel(BaseModel):
         self.y = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="label")
 
         with tf.name_scope("loss"):
-            beta = 0 # Good starting value
             regularizer = tf.nn.l2_loss(self.w1) + tf.nn.l2_loss(self.w3) + tf.nn.l2_loss(self.w4)
 
             self.cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits) + beta*regularizer)
+                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits) + self.config.beta*regularizer)
             self.train_step = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.cross_entropy,
                                                                                      global_step=self.global_step_tensor)
             correct_prediction = tf.equal(tf.argmax(self.logits, 1), tf.argmax(self.y, 1))

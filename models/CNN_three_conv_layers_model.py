@@ -43,25 +43,26 @@ class CNNThreeConvLayersModel(BaseModel):
         self.flatten = tf.reshape(self.pool3, [-1, 4 * 4 * 128])
 
         # Fully connected layer
-        self.w3 = self.weight_variable([4 * 4 * 128, 1024])
-        self.b3 = self.bias_variable([1024])
-        self.fc3 = tf.matmul(self.flatten, self.w3) + self.b3
-        self.act3 = tf.nn.relu(self.fc3)
+        self.w4 = self.weight_variable([4 * 4 * 128, 1024])
+        self.b4 = self.bias_variable([1024])
+        self.fc4 = tf.matmul(self.flatten, self.w4) + self.b4
+        self.act4 = tf.nn.relu(self.fc4)
 
         # Dropout, to avoid over-fitting
         self.keep_prob = tf.placeholder(tf.float32)
-        self.drop3 = tf.nn.dropout(self.act3, self.keep_prob)
+        self.drop4 = tf.nn.dropout(self.act4, self.keep_prob)
 
         # Readout layer
-        self.w4 = self.weight_variable([1024, 10])
-        self.b4 = self.bias_variable([10])
-        self.logits = tf.matmul(self.drop3, self.w4) + self.b4
+        self.w5 = self.weight_variable([1024, 10])
+        self.b5 = self.bias_variable([10])
+        self.logits = tf.matmul(self.drop4, self.w5) + self.b5
 
         self.y = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="label")
 
         with tf.name_scope("loss"):
+            regularizer = tf.nn.l2_loss(self.w1) + tf.nn.l2_loss(self.w2) + tf.nn.l2_loss(self.w3) + tf.nn.l2_loss(self.w4) + tf.nn.l2_loss(self.w5)
             self.cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits))
+                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits) + self.config.beta*regularizer)
             self.train_step = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.cross_entropy,
                                                                                      global_step=self.global_step_tensor)
             correct_prediction = tf.equal(tf.argmax(self.logits, 1), tf.argmax(self.y, 1))
