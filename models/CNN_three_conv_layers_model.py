@@ -20,51 +20,49 @@ class CNNThreeConvLayersModel(BaseModel):
         self.b1 = self.bias_variable([32])
         self.conv1 = self.conv2d(self.x_reshaped, self.w1) + self.b1
         self.act1 = tf.nn.relu(self.conv1)
-        self.pool1 = self.max_pool_2x2(self.act1)
-
-        print(self.pool1.shape)
+        self.batch_norm1 = self.batch_norm(self.act1, 32, self.is_training)
+        self.pool1 = self.max_pool_2x2(self.batch_norm1)
 
         # Second convolutional layer
         self.w2 = self.weight_variable([5, 5, 32, 64])
         self.b2 = self.bias_variable([64])
         self.conv2 = self.conv2d(self.pool1, self.w2) + self.b2
         self.act2 = tf.nn.relu(self.conv2)
-        self.pool2 = self.max_pool_2x2(self.act2)
-
-        print(self.pool2.shape)
+        self.batch_norm2 = self.batch_norm(self.act2, 64, self.is_training)
+        self.pool2 = self.max_pool_2x2(self.batch_norm2)
 
         # Third convolutional layer
         self.w3 = self.weight_variable([7, 7, 64, 128])
         self.b3 = self.bias_variable([128])
         self.conv3 = self.conv2d(self.pool2, self.w3) + self.b3
         self.act3 = tf.nn.relu(self.conv3)
-        self.pool3 = self.max_pool_2x2(self.act3)
-
-        print(self.pool3.shape)
+        self.batch_norm3 = self.batch_norm(self.act3, 128, self.is_training)
+        self.pool3 = self.max_pool_2x2(self.batch_norm3)
 
         # Flatten layer
         self.flatten = tf.reshape(self.pool3, [-1, 4 * 4 * 128])
 
         # Fully connected layer
-        self.w3 = self.weight_variable([4 * 4 * 128, 1024])
-        self.b3 = self.bias_variable([1024])
-        self.fc3 = tf.matmul(self.flatten, self.w3) + self.b3
-        self.act3 = tf.nn.relu(self.fc3)
+        self.w4 = self.weight_variable([4 * 4 * 128, 1024])
+        self.b4 = self.bias_variable([1024])
+        self.fc4 = tf.matmul(self.flatten, self.w4) + self.b4
+        self.act4 = tf.nn.relu(self.fc4)
 
         # Dropout, to avoid over-fitting
         self.keep_prob = tf.placeholder(tf.float32)
-        self.drop3 = tf.nn.dropout(self.act3, self.keep_prob)
+        self.drop4 = tf.nn.dropout(self.act4, self.keep_prob)
 
         # Readout layer
-        self.w4 = self.weight_variable([1024, 10])
-        self.b4 = self.bias_variable([10])
-        self.logits = tf.matmul(self.drop3, self.w4) + self.b4
+        self.w5 = self.weight_variable([1024, 10])
+        self.b5 = self.bias_variable([10])
+        self.logits = tf.matmul(self.drop4, self.w5) + self.b5
 
         self.y = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="label")
 
         with tf.name_scope("loss"):
+            regularizer = tf.nn.l2_loss(self.w1) + tf.nn.l2_loss(self.w2) + tf.nn.l2_loss(self.w3) + tf.nn.l2_loss(self.w4) + tf.nn.l2_loss(self.w5)
             self.cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits))
+                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits) + self.config.beta*regularizer)
             self.train_step = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.cross_entropy,
                                                                                      global_step=self.global_step_tensor)
             correct_prediction = tf.equal(tf.argmax(self.logits, 1), tf.argmax(self.y, 1))
@@ -90,3 +88,24 @@ class CNNThreeConvLayersModel(BaseModel):
     @staticmethod
     def max_pool_2x2(features):
         return tf.nn.max_pool(features, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+    @staticmethod
+    def batch_norm(x, n_out, phase_train):
+        with tf.variable_scope('bn'):
+            beta = tf.Variable(tf.constant(0.0, shape=[n_out]),
+                                         name='beta', trainable=True)
+            gamma = tf.Variable(tf.constant(1.0, shape=[n_out]),
+                                          name='gamma', trainable=True)
+            batch_mean, batch_var = tf.nn.moments(x, [0,1,2], name='moments')
+            ema = tf.train.ExponentialMovingAverage(decay=0.5)
+
+            def mean_var_with_update():
+                ema_apply_op = ema.apply([batch_mean, batch_var])
+                with tf.control_dependencies([ema_apply_op]):
+                    return tf.identity(batch_mean), tf.identity(batch_var)
+
+            mean, var = tf.cond(phase_train,
+                                mean_var_with_update,
+                                lambda: (ema.average(batch_mean), ema.average(batch_var)))
+            normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
+        return normed

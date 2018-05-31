@@ -18,14 +18,10 @@ class CNNOneConvLayerModel(BaseModel):
         # First convolutional layer
         self.w1 = self.weight_variable([5, 5, 1, 32])
         self.b1 = self.bias_variable([32])
-
         self.conv1 = self.conv2d(self.x_reshaped, self.w1) + self.b1
-        self.conv1_bn = self.batch_norm(self.conv1, 32, self.is_training)
-        self.act1 = tf.nn.relu(self.conv1_bn)
-        #self.conv1 = self.conv2d(self.x_reshaped, self.w1) + self.b1
-        #self.act1 = tf.nn.relu(self.conv1)
-
-        self.pool1 = self.max_pool_2x2(self.act1)
+        self.act1 = tf.nn.relu(self.conv1)
+        self.batch_norm1 = self.batch_norm(self.act1, 32, self.is_training)
+        self.pool1 = self.max_pool_2x2(self.batch_norm1)
 
         # Flatten layer
         self.flatten = tf.reshape(self.pool1, [-1, 14 * 14 * 32])
@@ -48,11 +44,10 @@ class CNNOneConvLayerModel(BaseModel):
         self.y = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="label")
 
         with tf.name_scope("loss"):
-            beta = 0 # Good starting value
             regularizer = tf.nn.l2_loss(self.w1) + tf.nn.l2_loss(self.w3) + tf.nn.l2_loss(self.w4)
 
             self.cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits) + beta*regularizer)
+                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y,logits=self.logits) + self.config.beta*regularizer)
             self.train_step = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.cross_entropy,
                                                                                      global_step=self.global_step_tensor)
             correct_prediction = tf.equal(tf.argmax(self.logits, 1), tf.argmax(self.y, 1))
