@@ -25,7 +25,8 @@ class LogisticRegressionTrainer(BaseTrain):
         train_summaries_dict = {
             'loss': train_loss,
             'acc': train_acc,
-            'histogram': self.sess.run(self.model.w)
+            'histogram_layer1_weight': self.sess.run(self.model.w),
+            'histogram_layer1_bias': self.sess.run(self.model.b)
         }
 
         valid_loss, valid_acc = self.valid_step()
