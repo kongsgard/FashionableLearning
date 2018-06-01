@@ -25,6 +25,12 @@ class CNNOneConvLayerTrainer(BaseTrain):
         train_summaries_dict = {
             'loss': train_loss,
             'acc': train_acc,
+            'histogram_convlayer1_weight': self.sess.run(self.model.w1),
+            'histogram_convlayer1_bias': self.sess.run(self.model.b1),
+            'histogram_fc_weight': self.sess.run(self.model.w3),
+            'histogram_fc_bias': self.sess.run(self.model.b3),
+            'histogram_readout_weight': self.sess.run(self.model.w4),
+            'histogram_readout_bias': self.sess.run(self.model.b4)
         }
 
         valid_loss, valid_acc = self.valid_step()
