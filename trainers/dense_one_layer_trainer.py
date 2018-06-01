@@ -1,7 +1,7 @@
 from base.base_train import BaseTrain
 from tqdm import tqdm
 import numpy as np
-
+import tensorflow as tf
 
 class DenseOneLayerTrainer(BaseTrain):
     def __init__(self, sess, model, data, config,logger):
@@ -20,11 +20,13 @@ class DenseOneLayerTrainer(BaseTrain):
 
         print("Acc:", acc) # TODO: Remove
         print("Loss:", loss) # TODO: Remove
+    
 
         cur_it = self.model.global_step_tensor.eval(self.sess)
         train_summaries_dict = {
             'loss': train_loss,
             'acc': train_acc,
+            #'histogram_denselayer1_dense': self.sess.run(self.model.d1),
         }
 
         test_loss, test_acc = self.test_step()
