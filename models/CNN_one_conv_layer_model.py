@@ -16,34 +16,38 @@ class CNNOneConvLayerModel(BaseModel):
         self.x_reshaped = tf.reshape(self.x, [-1, 28, 28, 1])
 
         # First convolutional layer
-        self.w1 = self.weight_variable([5, 5, 1, 32])
-        self.b1 = self.bias_variable([32])
-        self.conv1 = self.conv2d(self.x_reshaped, self.w1) + self.b1
-        self.act1 = tf.nn.relu(self.conv1)
-        self.batch_norm1 = self.batch_norm(self.act1, 32, self.is_training)
-        self.pool1 = self.max_pool_2x2(self.batch_norm1)
+        with tf.name_scope("Conv_layer"):
+            self.w1 = self.weight_variable([5, 5, 1, 32])
+            self.b1 = self.bias_variable([32])
+            self.conv1 = self.conv2d(self.x_reshaped, self.w1) + self.b1
+            self.act1 = tf.nn.relu(self.conv1)
+            self.batch_norm1 = self.batch_norm(self.act1, 32, self.is_training)
+            self.pool1 = self.max_pool_2x2(self.batch_norm1)
 
         # Flatten layer
         self.flatten = tf.reshape(self.pool1, [-1, 14 * 14 * 32])
 
         # Fully connected layer
-        self.w3 = self.weight_variable([14 * 14 * 32, 1024])
-        self.b3 = self.bias_variable([1024])
-        self.fc3 = tf.matmul(self.flatten, self.w3) + self.b3
-        self.act3 = tf.nn.relu(self.fc3)
+        with tf.name_scope("FC_layer"):
+            self.w3 = self.weight_variable([14 * 14 * 32, 1024])
+            self.b3 = self.bias_variable([1024])
+            self.fc3 = tf.matmul(self.flatten, self.w3) + self.b3
+            self.act3 = tf.nn.relu(self.fc3)
 
         # Dropout, to avoid over-fitting
-        self.keep_prob = tf.placeholder(tf.float32)
-        self.drop3 = tf.nn.dropout(self.act3, self.keep_prob)
+        with tf.name_scope("Dropout_layer"):
+            self.keep_prob = tf.placeholder(tf.float32)
+            self.drop3 = tf.nn.dropout(self.act3, self.keep_prob)
 
         # Readout layer
-        self.w4 = self.weight_variable([1024, 10])
-        self.b4 = self.bias_variable([10])
-        self.logits = tf.matmul(self.drop3, self.w4) + self.b4
+        with tf.name_scope("Readout_layer"):
+            self.w4 = self.weight_variable([1024, 10])
+            self.b4 = self.bias_variable([10])
+            self.logits = tf.matmul(self.drop3, self.w4) + self.b4
 
         self.y = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="label")
 
-        with tf.name_scope("loss"):
+        with tf.name_scope("Loss"):
             regularizer = tf.nn.l2_loss(self.w1) + tf.nn.l2_loss(self.w3) + tf.nn.l2_loss(self.w4)
 
             self.cross_entropy = tf.reduce_mean(
@@ -76,7 +80,7 @@ class CNNOneConvLayerModel(BaseModel):
 
     @staticmethod
     def batch_norm(x, n_out, phase_train):
-        with tf.variable_scope('bn'):
+        with tf.variable_scope('Batch_norm'):
             beta = tf.Variable(tf.constant(0.0, shape=[n_out]),
                                          name='beta', trainable=True)
             gamma = tf.Variable(tf.constant(1.0, shape=[n_out]),
