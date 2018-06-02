@@ -17,9 +17,9 @@ class VGG16Trainer(BaseTrain):
             accs.append(acc)
         train_loss = np.mean(losses)
         train_acc = np.mean(accs)
-
-        print("Train acc:", acc) # TODO: Remove
-        print("Train loss:", loss) # TODO: Remove
+        print("Epoch#:", self.cur_epoch) # TODO: Remove
+        print("train_acc:", acc) # TODO: Remove
+        print("train_loss:", loss) # TODO: Remove
 
         cur_it = self.model.global_step_tensor.eval(self.sess)
         train_summaries_dict = {
@@ -27,27 +27,26 @@ class VGG16Trainer(BaseTrain):
             'acc': train_acc,
         }
 
-
-        loop = tqdm(range(self.config.num_iter_per_epoch_test))
-        losses = []
-        accs = []
-        for _ in loop:
-            loss, acc = self.test_step()
-            losses.append(loss)
-            accs.append(acc)
-        test_loss = np.mean(losses)
-        test_acc = np.mean(accs)
-
-        print("Test acc:", acc) # TODO: Remove
-        print("Test loss:", loss) # TODO: Remove
-
-        test_summaries_dict = {
-            'loss': test_loss,
-            'acc': test_acc,
+        valid_loss, valid_acc = self.valid_step()
+        valid_summaries_dict = {
+            'loss': valid_loss,
+            'acc': valid_acc,
         }
 
+        print("valid_acc:", valid_acc) # TODO: Remove
+        print("valid_loss:", valid_loss) # TODO: Remove
+
+        if self.cur_epoch == self.config.num_epochs:
+            test_loss, test_acc = self.test_step()
+            test_summaries_dict = {
+                'test_loss': test_loss,
+                'test_acc': test_acc,
+            }
+            self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
+
+
         self.logger.summarize(cur_it, summaries_dict=train_summaries_dict, summarizer='train')
-        self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
+        self.logger.summarize(cur_it, summaries_dict=valid_summaries_dict, summarizer='valid')
         #self.model.save(self.sess)
 
 
@@ -58,9 +57,16 @@ class VGG16Trainer(BaseTrain):
                                      feed_dict=feed_dict)
         return loss, acc
 
+    def valid_step(self):
+        x_valid, y_valid = self.data.get_valid_data()
+        feed_dict = {self.model.x: x_valid, self.model.y: y_valid, self.model.is_training: False}
+        loss, acc = self.sess.run([self.model.cross_entropy, self.model.accuracy],
+                                   feed_dict=feed_dict)
+        return loss, acc
+
     def test_step(self):
-        x_test, y_test = next(self.data.next_batch_testdata(self.config.batch_size))
-        feed_dict = {self.model.x: x_test, self.model.y: y_test,self.model.is_training: False}
+        x_test, y_test = self.data.get_test_data()
+        feed_dict = {self.model.x: x_test, self.model.y: y_test, self.model.is_training: False}
         loss, acc = self.sess.run([self.model.cross_entropy, self.model.accuracy],
                                    feed_dict=feed_dict)
         return loss, acc
