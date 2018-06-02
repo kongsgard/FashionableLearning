@@ -18,31 +18,44 @@ class VGG16Model(BaseModel):
 
         # Block 1 -- outputs 112x112x64
         self.conv1_1 = tf.layers.conv2d(inputs=self.x_reshaped,filters = 64,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.conv1_2 = tf.layers.conv2d(inputs=self.conv1_1,filters = 64,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.pool1 = tf.layers.max_pooling2d(inputs=self.conv1_2, pool_size=[2, 2], strides=2, padding = 'same')
+        self.batch_norm1_1 = self.batch_norm(self.conv1_1, 64, self.is_training)
+        self.conv1_2 = tf.layers.conv2d(inputs=self.batch_norm1_1,filters = 64,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
+        self.batch_norm1_2 = self.batch_norm(self.conv1_2, 64, self.is_training)
+        self.pool1 = tf.layers.max_pooling2d(inputs=self.batch_norm1_2, pool_size=[2, 2], strides=2, padding = 'same')
 
         # Block 2 -- outputs 56x56x128
         self.conv2_1 = tf.layers.conv2d(inputs=self.pool1,filters = 128,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.conv2_2 = tf.layers.conv2d(inputs=self.conv2_1,filters = 128,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.pool2 = tf.layers.max_pooling2d(inputs=self.conv2_2, pool_size=[2, 2], strides=2, padding = 'same')
+        self.batch_norm2_1 = self.batch_norm(self.conv2_1, 128, self.is_training)
+        self.conv2_2 = tf.layers.conv2d(inputs=self.batch_norm2_1,filters = 128,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
+        self.batch_norm2_2 = self.batch_norm(self.conv2_2, 128, self.is_training)
+        self.pool2 = tf.layers.max_pooling2d(inputs=self.batch_norm2_2, pool_size=[2, 2], strides=2, padding = 'same')
 
         # Block 3 -- outputs 28x28x256
         self.conv3_1 = tf.layers.conv2d(inputs=self.pool2,filters = 256,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.conv3_2 = tf.layers.conv2d(inputs=self.conv3_1,filters = 256,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.conv3_3 = tf.layers.conv2d(inputs=self.conv3_2,filters = 256,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.pool3 = tf.layers.max_pooling2d(inputs=self.conv3_3, pool_size=[2, 2], strides=2, padding = 'same')
+        self.batch_norm3_1 = self.batch_norm(self.conv3_1, 256, self.is_training)
+        self.conv3_2 = tf.layers.conv2d(inputs=self.batch_norm3_1,filters = 256,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
+        self.batch_norm3_2 = self.batch_norm(self.conv3_2, 256, self.is_training)
+        self.conv3_3 = tf.layers.conv2d(inputs=self.batch_norm3_2,filters = 256,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
+        self.batch_norm3_3 = self.batch_norm(self.conv3_3, 256, self.is_training)
+        self.pool3 = tf.layers.max_pooling2d(inputs=self.batch_norm3_3, pool_size=[2, 2], strides=2, padding = 'same')
 
         # Block 4 -- outputs 14x14x512
         self.conv4_1 = tf.layers.conv2d(inputs=self.pool3,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.conv4_2 = tf.layers.conv2d(inputs=self.conv4_1,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.conv4_3 = tf.layers.conv2d(inputs=self.conv4_2,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.pool4 = tf.layers.max_pooling2d(inputs=self.conv4_3, pool_size=[2, 2], strides=2, padding = 'same')
+        self.batch_norm4_1 = self.batch_norm(self.conv4_1, 512, self.is_training)
+        self.conv4_2 = tf.layers.conv2d(inputs=self.batch_norm4_1,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
+        self.batch_norm4_2 = self.batch_norm(self.conv4_2, 512, self.is_training)
+        self.conv4_3 = tf.layers.conv2d(inputs=self.batch_norm4_2,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
+        self.batch_norm4_3 = self.batch_norm(self.conv4_3, 512, self.is_training)
+        self.pool4 = tf.layers.max_pooling2d(inputs=self.batch_norm4_3, pool_size=[2, 2], strides=2, padding = 'same')
 
         # Block 5 -- outputs 7x7x512
         self.conv5_1 = tf.layers.conv2d(inputs=self.pool4,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.conv5_2 = tf.layers.conv2d(inputs=self.conv5_1,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.conv5_3 = tf.layers.conv2d(inputs=self.conv5_2,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
-        self.pool5 = tf.layers.max_pooling2d(inputs=self.conv5_3, pool_size=[2, 2], strides=2, padding = 'same')
+        self.batch_norm5_1 = self.batch_norm(self.conv5_1, 512, self.is_training)
+        self.conv5_2 = tf.layers.conv2d(inputs=self.batch_norm5_1,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
+        self.batch_norm5_2 = self.batch_norm(self.conv5_2, 512, self.is_training)
+        self.conv5_3 = tf.layers.conv2d(inputs=self.batch_norm5_2,filters = 512,kernel_size = [3,3], padding='same',activation=tf.nn.relu)
+        self.batch_norm5_3 = self.batch_norm(self.conv5_3, 512, self.is_training)
+        self.pool5 = tf.layers.max_pooling2d(inputs=self.batch_norm5_3, pool_size=[2, 2], strides=2, padding = 'same')
 
         # Flatten layer
         flattened_shape = np.prod([s.value for s in self.pool5.get_shape()[1:]])
