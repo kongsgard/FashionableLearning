@@ -2,6 +2,8 @@ from base.base_train import BaseTrain
 from tqdm import tqdm
 import numpy as np
 
+from utils.logger import pack_filter_into_image
+
 
 class CNNOneConvLayerTrainer(BaseTrain):
     def __init__(self, sess, model, data, config,logger):
@@ -12,7 +14,7 @@ class CNNOneConvLayerTrainer(BaseTrain):
         losses = []
         accs = []
         for _ in loop:
-            loss, acc = self.train_step()
+            loss, acc, train_conv1_filter = self.train_step()
             losses.append(loss)
             accs.append(acc)
         train_loss = np.mean(losses)
@@ -25,6 +27,7 @@ class CNNOneConvLayerTrainer(BaseTrain):
         train_summaries_dict = {
             'loss': train_loss,
             'acc': train_acc,
+            'conv1_filter': pack_filter_into_image(train_conv1_filter),
             'histogram_convlayer1_weight': self.sess.run(self.model.w1),
             'histogram_convlayer1_bias': self.sess.run(self.model.b1),
             'histogram_fc_weight': self.sess.run(self.model.w3),
@@ -61,11 +64,14 @@ class CNNOneConvLayerTrainer(BaseTrain):
                      self.model.is_training: True}
         _, loss, acc = self.sess.run([self.model.train_step, self.model.cross_entropy,
                                       self.model.accuracy], feed_dict=feed_dict)
-        return loss, acc
+
+        x_0, y_0 = self.data.get_train_data()
+        _, _, _, train_conv1_filter = self.sess.run([self.model.train_step, self.model.cross_entropy, self.model.accuracy, self.model.act1], feed_dict={self.model.x: x_0, self.model.y: y_0, self.model.keep_prob: 1, self.model.is_training: False})
+        return loss, acc, train_conv1_filter
 
     def valid_step(self):
         x_valid, y_valid = self.data.get_valid_data()
-        feed_dict = {self.model.x: x_valid, self.model.y: y_valid,self.model.keep_prob: 1.,
+        feed_dict = {self.model.x: x_valid, self.model.y: y_valid, self.model.keep_prob: 1.,
                     self.model.is_training: False}
         loss, acc = self.sess.run([self.model.cross_entropy, self.model.accuracy],
                                    feed_dict=feed_dict)
