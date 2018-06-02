@@ -6,7 +6,6 @@ import os
 class LogisticRegressionModel(BaseModel):
     def __init__(self, config):
         super(LogisticRegressionModel, self).__init__(config)
-        self.histogram_writer = tf.summary.FileWriter(os.path.join(self.config.summary_dir, "Histogram"))
         self.build_model()
         self.init_saver()
 
