@@ -17,38 +17,38 @@ class DenseTwoLayerTrainer(BaseTrain):
             accs.append(acc)
         train_loss = np.mean(losses)
         train_acc = np.mean(accs)
-print("Epoch#:", self.cur_epoch) # TODO: Remove
-print("train_acc:", acc) # TODO: Remove
-print("train_loss:", loss) # TODO: Remove
+        print("Epoch#:", self.cur_epoch) # TODO: Remove
+        print("train_acc:", acc) # TODO: Remove
+        print("train_loss:", loss) # TODO: Remove
 
 
-cur_it = self.model.global_step_tensor.eval(self.sess)
-train_summaries_dict = {
-    'loss': train_loss,
-    'acc': train_acc,
-}
+        cur_it = self.model.global_step_tensor.eval(self.sess)
+        train_summaries_dict = {
+            'loss': train_loss,
+            'acc': train_acc,
+        }
 
-valid_loss, valid_acc = self.valid_step()
-valid_summaries_dict = {
-    'loss': valid_loss,
-    'acc': valid_acc,
-}
+        valid_loss, valid_acc = self.valid_step()
+        valid_summaries_dict = {
+            'loss': valid_loss,
+            'acc': valid_acc,
+        }
 
-print("valid_acc:", valid_acc) # TODO: Remove
-print("valid_loss:", valid_loss) # TODO: Remove
+        print("valid_acc:", valid_acc) # TODO: Remove
+        print("valid_loss:", valid_loss) # TODO: Remove
 
-if self.cur_epoch == self.config.num_epochs:
-    test_loss, test_acc = self.test_step()
-    test_summaries_dict = {
-        'test_loss': test_loss,
-        'test_acc': test_acc,
-    }
-    self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
+        if self.cur_epoch == self.config.num_epochs:
+            test_loss, test_acc = self.test_step()
+            test_summaries_dict = {
+                'test_loss': test_loss,
+                'test_acc': test_acc,
+            }
+            self.logger.summarize(cur_it, summaries_dict=test_summaries_dict, summarizer='test')
 
 
-self.logger.summarize(cur_it, summaries_dict=train_summaries_dict, summarizer='train')
-self.logger.summarize(cur_it, summaries_dict=valid_summaries_dict, summarizer='valid')
-self.model.save(self.sess)
+        self.logger.summarize(cur_it, summaries_dict=train_summaries_dict, summarizer='train')
+        self.logger.summarize(cur_it, summaries_dict=valid_summaries_dict, summarizer='valid')
+        self.model.save(self.sess)
 
     def train_step(self):
         batch_x, batch_y = next(self.data.next_batch(self.config.batch_size))
