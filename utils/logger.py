@@ -63,3 +63,19 @@ class Logger:
                 for summary in summary_list2:
                     summary_writer.add_summary(summary, step)
                 summary_writer.flush()
+
+def pack_filter_into_image(filter):
+    ix = 28
+    iy = 28
+    channels = 32
+    filter = tf.slice(filter,(0,0,0,0),(1,-1,-1,-1))
+    filter = tf.reshape(filter,(iy,ix,channels))
+    ix += 4
+    iy += 4
+    filter = tf.image.resize_image_with_crop_or_pad(filter, iy, ix)
+    cx = 8
+    cy = 4
+    filter = tf.reshape(filter,(iy,ix,cy,cx))
+    filter = tf.transpose(filter,(2,0,3,1)) #cy,iy,cx,ix
+    filter = tf.reshape(filter,(1,cy*iy,cx*ix,1)).eval()
+    return filter

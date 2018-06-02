@@ -17,6 +17,9 @@ class DataGenerator:
     def next_batch_testdata(self, batch_size):
         yield fashion_mnist.test.next_batch(self.config.batch_size)
 
+    def get_train_data(self):
+        return fashion_mnist.train.images[0:2], fashion_mnist.train.labels[0:2]
+
     def get_test_data(self):
         return fashion_mnist.test.images, fashion_mnist.test.labels
 
