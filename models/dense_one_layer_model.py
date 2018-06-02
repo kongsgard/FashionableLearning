@@ -15,13 +15,11 @@ class DenseOneLayerModel(BaseModel):
         self.y = tf.placeholder(tf.float32, shape=[None, 10])
 
         # Network architecture
-        self.d1 = tf.layers.dense(self.x, 512, activation=tf.nn.relu, name="dense1")
-        logits = tf.layers.dense(self.d1, 10, name="out")
-
-        print([v.name for v in tf.all_variables()])
+        d1 = tf.layers.dense(self.x, 512, activation=tf.nn.relu, name="dense1")
+        logits = tf.layers.dense(d1, 10, name="out")
 
         with tf.name_scope("loss"):
-            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=logits))
+            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=d2))
             self.train_step = tf.train.AdamOptimizer(self.config.learning_rate).minimize(self.cross_entropy,
                                                                                          global_step=self.global_step_tensor)
             correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(self.y, 1))
