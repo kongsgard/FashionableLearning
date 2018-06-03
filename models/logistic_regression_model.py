@@ -25,8 +25,7 @@ class LogisticRegressionModel(BaseModel):
 
         with tf.name_scope("loss"):
             self.cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=self.logits)
-                )
+                tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=self.logits))
             self.train_step = tf.train.AdamOptimizer(0.5).minimize(self.cross_entropy, global_step=self.global_step_tensor)
 
             correct_prediction = tf.equal(tf.argmax(self.y, 1), tf.argmax(self.logits, 1))
