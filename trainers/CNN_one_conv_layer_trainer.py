@@ -57,7 +57,7 @@ class CNNOneConvLayerTrainer(BaseTrain):
 
     def train_step(self):
         batch_x, batch_y = next(self.data.next_batch(self.config.batch_size))
-        feed_dict = {self.model.x: batch_x, self.model.y: batch_y, self.model.keep_prob: 0.2,
+        feed_dict = {self.model.x: batch_x, self.model.y: batch_y, self.model.keep_prob: 0.3,
                      self.model.is_training: True}
         _, loss, acc = self.sess.run([self.model.train_step, self.model.cross_entropy,
                                       self.model.accuracy], feed_dict=feed_dict)
