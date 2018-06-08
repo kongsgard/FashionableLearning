@@ -17,9 +17,7 @@ class CapsnetTrainer(BaseTrain):
             accs.append(acc)
         train_loss = np.mean(losses)
         train_acc = np.mean(accs)
-
-        print("Acc:", acc) # TODO: Remove
-        print("Loss:", loss) # TODO: Remove
+        print("Epoch#:", self.cur_epoch)
 
         cur_it = self.model.global_step_tensor.eval(self.sess)
         train_summaries_dict = {
